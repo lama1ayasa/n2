@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>تحدي الهوية الغامضة — Mystery Tech File</title>
+  
+  <!-- Fonts & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root {
+      --bg-color: #050508;
+      --card-bg: rgba(18, 18, 26, 0.75);
+      --accent: #00f0ff;
+      --accent-glow: rgba(0, 240, 255, 0.3);
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --success: #10b981;
+      --danger: #ef4444;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Tajawal', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Grid Overlay */
+    body::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      z-index: -1;
+    }
+
+    /* Glowing ambient blur */
+    .glow-bg {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: var(--accent-glow);
+      filter: blur(150px);
+      border-radius: 50%;
+      z-index: -1;
+      top: 20%;
+    }
+
+    .container {
+      width: 90%;
+      max-width: 650px;
+      background: var(--card-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      padding: 40px 30px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px var(--accent-glow);
+      text-align: center;
+      position: relative;
+      z-index: 10;
+    }
+
+    .header-badge {
+      display: inline-block;
+      background: rgba(0, 240, 255, 0.1);
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      padding: 6px 16px;
+      border-radius: 50px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
+      font-family: 'Chakra Petch', sans-serif;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 900;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+
+    p.subtitle {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin-bottom: 25px;
+    }
+
+    /* Dynamic Clue Box Area */
+    .clue-stage {
+      min-height: 130px;
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px dashed rgba(0, 240, 255, 0.3);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      margin-bottom: 25px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .clue-text {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1.6;
+      transition: all 0.5s ease;
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .clue-text.fade-out {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+
+    .clue-number {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 0.75rem;
+      font-family: 'Chakra Petch', sans-serif;
+      color: var(--muted);
+    }
+
+    /* Timer Display */
+    .timer-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      font-family: 'Chakra Petch', sans-serif;
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 25px;
+    }
+
+    .timer-icon {
+      width: 12px;
+      height: 12px;
+      background-color: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--accent);
+      animation: pulse 1s infinite alternate;
+    }
+
+    @keyframes pulse {
+      from { opacity: 0.3; transform: scale(0.8); }
+      to { opacity: 1; transform: scale(1.2); }
+    }
+
+    /* Input Controls */
+    .input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 14px 18px;
+      color: #fff;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+
+    input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 15px var(--accent-glow);
+    }
+
+    button {
+      background: var(--accent);
+      color: #000;
+      font-weight: 700;
+      border: none;
+      border-radius: 12px;
+      padding: 14px 28px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: all 0.3s;
+    }
+
+    button:hover {
+      background: #fff;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+    }
+
+    .status-msg {
+      font-size: 0.95rem;
+      font-weight: 700;
+      min-height: 24px;
+    }
+
+    .status-msg.error { color: var(--danger); }
+    .status-msg.success { color: var(--success); }
+
+    /* Victory Modal overlay */
+    .victory-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.92);
+      z-index: 100;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .victory-card {
+      background: rgba(20, 20, 30, 0.9);
+      border: 2px solid var(--success);
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 0 50px rgba(16, 185, 129, 0.4);
+      max-width: 500px;
+    }
+
+    .victory-card h2 {
+      font-size: 2.2rem;
+      color: var(--success);
+      margin-bottom: 15px;
+    }
+
+    .victory-card p {
+      color: var(--text);
+      font-size: 1.1rem;
+      line-height: 1.6;
+      margin-bottom: 25px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="glow-bg"></div>
+
+  <div class="container">
+    <div class="header-badge">CLASSIFIED TECH DOSSIER</div>
+    <h1>من الشخصية الغامضة؟</h1>
+    <p class="subtitle">تجمع التلميحات التي تظهر كل 4 ثوانٍ واكتشف الهوية المخبأة</p>
+
+    <!-- العداد التنازلي -->
+    <div class="timer-container">
+      <div class="timer-icon"></div>
+      <span id="timer">01:00</span>
+    </div>
+
+    <!-- شاشة عرض التلميحات المتغيرة -->
+    <div class="clue-stage">
+      <span class="clue-number" id="clue-num">CLUE #1</span>
+      <div class="clue-text" id="clue-display">جاري تحميل أول دليل من الملفات السرية...</div>
+    </div>
+
+    <!-- نموذج إدخال الإجابة -->
+    <div class="input-group">
+      <input type="text" id="answer-input" placeholder="أدخل اسم الشخصية..." autocomplete="off">
+      <button onclick="checkAnswer()">تأكيد</button>
+    </div>
+
+    <div class="status-msg" id="status-msg"></div>
+  </div>
+
+  <!-- شاشة الفوز النهائية -->
+  <div class="victory-modal" id="victory-modal">
+    <div class="victory-card">
+      <h2>🎉 إجابة صحيحة!</h2>
+      <p>أحسنت! لقد استطعت ربط الدلائل واكتشاف الهوية المخبأة:</p>
+      <h1 style="color: #fff; margin-bottom: 20px; font-size: 2.5rem;">ستيف جوبز</h1>
+      <p style="font-size: 0.9rem; color: var(--muted);">"الذين يعتقدون أنهم مجانين بدرجة تكفي لتغيير العالم.. هم الذين يفعلون ذلك."</p>
+      <button onclick="location.reload()" style="margin-top: 20px;">إعادة التحدي</button>
+    </div>
+  </div>
+
+  <script>
+    // قائمة التلميحات الذكية المحدثة (بدون فاكهة ولا أسماء صريحة)
+    const clues = [
+      " «ابقَ جائعاً.. ابقَ طامحاً» — المقولة الشهيرة التي ختم بها أحد أشهر خطاباته لخريجي الجامعة.",
+      " رائد أعمال تكنولوجي عاش وعمل في ولاية كاليفورنيا الأمريكية (1955 – 2011).",
+      " اشتهر بمظهر موحد وثابت على المسرح: قميص أسود بياقة عالية، بنطال جينز أزرق، وحذاء رياضي.",
+      " في عام 2007، صعد على المسرح ليعلن عن دمج 3 أجهزة في جهاز واحد يعمل بالكامل باللمس ودون أي أزرار أو قلم.",
+      " ترك الدراسة الجامعية بعد الفصل الأول، لكنه درس كورس الخطوط (Calligraphy) الذي ألهمه لاحقاً في تصميم خطوط الشاشات.",
+      " بدأ تأسيس شركته الأولى وتجميع أول لوحة أم للكمبيوتر داخل مرآب (كراج) منزل عائلته.",
+      " أطلق حملة إعلانية واستعراضية ملهمة أواخر التسعينات تحت شعار: «فكر بشكل مختلف - Think Different»."
+    ];
+
+    // الإجابات المقبولة للفوز
+    const validAnswers = [
+      "ستيف جوبز", 
+      "ستيف جوبس", 
+      "steve jobs", 
+      "stevejob", 
+      "steve"
+    ];
+
+    let currentClueIndex = 0;
+    let timeLeft = 60; // 60 ثانية
+    let gameActive = true;
+
+    const clueEl = document.getElementById("clue-display");
+    const clueNumEl = document.getElementById("clue-num");
+    const timerEl = document.getElementById("timer");
+    const statusEl = document.getElementById("status-msg");
+    const answerInput = document.getElementById("answer-input");
+
+    // 1. التبديل بين التلميحات كل 4 ثوانٍ
+    function updateClue() {
+      if (!gameActive) return;
+
+      clueEl.classList.add("fade-out");
+
+      setTimeout(() => {
+        clueEl.textContent = clues[currentClueIndex];
+        clueNumEl.textContent = `CLUE #${currentClueIndex + 1}`;
+        clueEl.classList.remove("fade-out");
+
+        currentClueIndex = (currentClueIndex + 1) % clues.length;
+      }, 400);
+    }
+
+    // تشغيل أول دليل فوراً ثم التبديل كل 4 ثوانٍ
+    updateClue();
+    const clueInterval = setInterval(updateClue, 4000);
+
+    // 2. العداد التنازلي لمدة دقيقة
+    const timerInterval = setInterval(() => {
+      if (!gameActive) return;
+
+      timeLeft--;
+      let seconds = timeLeft < 10 ? '0' + timeLeft : timeLeft;
+      timerEl.textContent = `00:${seconds}`;
+
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        clearInterval(clueInterval);
+        gameActive = false;
+        statusEl.textContent = "⏱️️ انتهى الوقت! قم بإعادة المحاولة وترتيب التلميحات.";
+        statusEl.className = "status-msg error";
+        answerInput.disabled = true;
+      }
+    }, 1000);
+
+    // 3. التحقق من الإجابة
+    function checkAnswer() {
+      if (!gameActive && timeLeft > 0) return;
+
+      const userVal = answerInput.value.trim().toLowerCase();
+
+      if (validAnswers.includes(userVal)) {
+        // فوز الطالب!
+        gameActive = false;
+        clearInterval(timerInterval);
+        clearInterval(clueInterval);
+
+        // إطلاق قصاصات الورق الاحتفالية (Confetti)
+        confetti({
+          particleCount: 150,
+          spread: 80,
+          origin: { y: 0.6 }
+        });
+
+        document.getElementById("victory-modal").style.display = "flex";
+      } else {
+        statusEl.textContent = "❌ إجابة غير صحيحة، حاول التركيز في التلميحات المطلوبة!";
+        statusEl.className = "status-msg error";
+      }
+    }
+
+    // السماح بالضغط على Enter للإرسال
+    answerInput.addEventListener("keypress", function(e) {
+      if (e.key === "Enter") {
+        checkAnswer();
+      }
+    });
+  </script>
+</body>
+</html>
+</html>
